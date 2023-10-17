@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="jquery-3.7.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="first">
+        <img src="bingo.png" width="140px" height="140px" class="icon_bingo" />
+        <div class="mb-3">
+          <label
+            for="exampleFormControlInput1"
+            class="form-label"
+            style="
+              font-size: xx-large;
+              color: rgba(0, 0, 0, 0.833);
+              padding-top: 40px;
+            "
+            >Enter Game Code Here</label
+          >
+          <input
+            style="text-align: center"
+            type="email"
+            class="form-control"
+            id="game_code"
+            placeholder="Enter Bingo Code"
+          />
+        </div>
+
+        <button
+          id="game_code_button"
+          type="button"
+          class="btn btn-success"
+          style="width: 200px"
+          onclick="getthatdatabro()"
+        >
+          Enter
+        </button>
+      </div>
+
+      <button
+        id="back_button"
+        type="button"
+        class="btn btn-success"
+        style="width: 150px"
+        onclick="backnatabro()"
+      >
+        Back
+      </button>
+
+      <button
+        id="dashboard_button"
+        type="button"
+        class="btn btn-success"
+        style="width: 190px"
+        onclick="dashboardnatabro()"
+      >
+        Dashboard
+      </button>
+
+      <div id="liveAlertPlaceholder"></div>
+
+      <div class="second" id="s">
+        <div id="bingo_card_frontend"></div>
+        <div class="the_buttons">
+          <button
+            id="check_button"
+            type="button"
+            class="btn btn-success"
+            style="width: 150px"
+            onclick="checkthatcardbro()"
+          >
+            Check Card
+          </button>
+
+          <button
+            id="new_button"
+            type="button"
+            class="btn btn-success"
+            style="width: 150px"
+            onclick="newthatcardbro()"
+          >
+            New Card
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    var current_card = "hi";
+    var current_game_code = "hi";
+
+    function getthatdatabro() {
+      user_input = $("#game_code").val();
+
+      $.get(
+        `http://www.hyeumine.com/getcard.php?bcode=${user_input}`,
+        function (data) {
+          //data mao ni ireturn sa website or server
+          //string man ireturn so ato i object! use parse!
+          data = JSON.parse(data);
+          // check nato if naa sulod or wala/ if valid ang code gi input
+
+          if (data) {
+            current_game_code = user_input;
+            current_card = data.playcard_token;
+            $(".first").hide();
+
+            $(".second #check_button").slideDown();
+            $(".second #bingo_card_frontend").slideDown();
+            $(".second #new_button").slideDown();
+            $("#back_button").slideDown();
+            $("#dashboard_button").slideDown();
+
+            $(".second").prepend(`<div>Game Code: ${user_input}</div>`);
+
+            for (const letter of "BINGO") {
+              let adder = `<div class="letter_number_group" style="flex-direction: column; display: flex; ">
+                        <span class="letter_box" style = "width: 80px;
+                        height: 80px; text-align: center; border: 3px solid black; line-height: 80px; background-color: #198754; font-size: xxx-large">${letter}</span>`;
+              for (const i of data.card[letter]) {
+                adder += `<span class="number_box" id = "celliboy" style = "width: 80px;
+            height: 80px; text-align: center;border: 3px solid black; line-height: 80px;">${i}</span>`;
+              }
+
+              adder += "</div>";
+              $("#bingo_card_frontend").append(adder);
+            }
+
+            $("#bingo_card_frontend").on("click", ".number_box", function () {
+              // Toggle the background color of the clicked cell
+              $(this).toggleClass("clicked");
+            });
+          } else {
+            $("#game_code").css("border-color", "red");
+
+            // Set a timer to change it back to the original color after 5 seconds
+            setTimeout(function () {
+              $("#game_code").css("border-color", "white"); // Or set it to the original color
+            }, 3000);
+          }
+        }
+      );
+    }
+
+    function checkthatcardbro() {
+      $.get(
+        `http://www.hyeumine.com/checkwin.php?playcard_token=${current_card}`,
+        function (data) {
+          //check ngano mani sigeg kadaog
+          //alert(current_card);
+          //alert(data);
+          //alert(typeof data);
+          //alert
+          const alertPlaceholder = document.getElementById(
+            "liveAlertPlaceholder"
+          );
+          const appendAlert = (message, type) => {
+            $("#liveAlertPlaceholder").html("");
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = [
+              `<div class="alert alert-${type} alert-dismissible" role="alert" style = "position: absolute; top: 80px; left: 20px">`,
+              `   <div style = "font-size: small;">${message}</div>`,
+              '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+              "</div>",
+            ].join("");
+
+            alertPlaceholder.append(wrapper);
+          };
+
+          const alertTrigger = document.getElementById("check_button");
+          if (alertTrigger) {
+            alertTrigger.addEventListener("click", () => {
+              if (data === "1") {
+                appendAlert("Nice, you Won!", "success");
+              } else {
+                appendAlert("Sorry, you got a bad card!", "success");
+              }
+            });
+          }
+        }
+      );
+    }
+
+    function newthatcardbro() {
+      $("#s").find("div").first().remove();
+      $("#bingo_card_frontend").html("");
+      getthatdatabro();
+    }
+
+    function backnatabro() {
+      $("#liveAlertPlaceholder").html("");
+      $(".first").fadeIn();
+      $("#s").find("div").first().remove();
+      $("#bingo_card_frontend").html("");
+      $(".second #check_button").hide();
+      $("#back_button").hide();
+      $("#dashboard_button").hide();
+      $(".second #new_button").hide();
+      $(".second #bingo_card_frontend").hide();
+
+      $("#bingo_card_frontend").on("click", ".number_box", function () {
+        // Toggle the background color of the clicked cell
+        $(this).toggleClass("clicked");
+      });
+    }
+
+    function dashboardnatabro() {
+      var websiteURL = `http://www.hyeumine.com/bingodashboard.php?bcode=${current_game_code}`;
+
+      window.open(websiteURL, "_blank");
+    }
+
+    $(function () {
+      $(".second #check_button").hide();
+      $("#back_button").hide();
+      $("#dashboard_button").hide();
+      $(".second #new_button").hide();
+      $(".second #bingo_card_frontend").hide();
+    });
+  </script>
+</html>
